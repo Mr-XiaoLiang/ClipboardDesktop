@@ -14,38 +14,28 @@ object DataManager {
         if (data != null) {
             return
         } else {
-            dataList.add(Data(value))
+            dataList.add(0, Data(value))
         }
-        sort()
     }
 
     fun copy(data: Data) {
-        data.copyCount++
+        data.copyCountUp()
         // 获取系统剪贴板
         val clipboard = Toolkit.getDefaultToolkit().systemClipboard
         // 封装字符串
         val selection = StringSelection(data.value)
         // 设置剪贴板内容
         clipboard.setContents(selection, null)
-        sort()
     }
 
-    private fun sort() {
-        dataList.sortedByDescending { it.createTime }.sortedByDescending { it.copyCount }
+    fun sort() {
+        val newList = dataList.sortedByDescending { it.createTime }.sortedByDescending { it.copyCount.value }
+        dataList.clear()
+        dataList.addAll(newList)
     }
 
     fun remove(data: Data) {
         dataList.remove(data)
-    }
-
-    class Data(val value: String) {
-
-        var copyCount = 0
-        val createTime = System.currentTimeMillis()
-
-        override fun toString(): String {
-            return value
-        }
     }
 
 }

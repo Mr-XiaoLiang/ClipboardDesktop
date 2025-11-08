@@ -30,12 +30,16 @@ fun main() {
         Tray(
             icon = painterResource(Res.drawable.tray_icon_v),
             menu = {
-                Item("Open", onClick = { isAppRunning = true })
+                Item("Open", onClick = {
+                    isAppRunning = true
+                    DataManager.sort()
+                })
                 Item("Exit", onClick = ::exitApplication)
             },
             tooltip = "Clipboard",
             onAction = {
                 isAppRunning = true
+                DataManager.sort()
             }
         )
     }
