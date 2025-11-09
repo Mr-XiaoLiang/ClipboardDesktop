@@ -48,7 +48,7 @@ compose.desktop {
 
         jvmArgs += listOf("-Xmx2G")
         val appName = "Clipboard"
-        val versionName = "1.0.0"
+        val versionName = "1.1.0"
         val pkgName = "com.lollipop.clipboard"
         val sdf = SimpleDateFormat("yyyyMMdd-HHmmss")
         val buildVersion = "${versionName}-${sdf.format(Date(System.currentTimeMillis()))}"

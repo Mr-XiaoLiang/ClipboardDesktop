@@ -1,12 +1,7 @@
 package com.lollipop.clipboard
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.TooltipArea
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.Card
@@ -23,12 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
-import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun AppWindow(
@@ -36,7 +30,8 @@ fun AppWindow(
     onCloseRequest: () -> Unit,
     visible: Boolean,
     undecorated: Boolean,
-    menuList: List<AppMenu>,
+    alwaysOnTop: Boolean,
+    windowMenu: @Composable RowScope.() -> Unit = {},
     content: @Composable (ComposeWindow) -> Unit
 ) {
     if (undecorated) {
@@ -44,7 +39,8 @@ fun AppWindow(
             title = title,
             onCloseRequest = onCloseRequest,
             visible = visible,
-            menuList = menuList,
+            windowMenu = windowMenu,
+            alwaysOnTop = alwaysOnTop,
             content = content
         )
     } else {
@@ -52,7 +48,8 @@ fun AppWindow(
             title = title,
             onCloseRequest = onCloseRequest,
             visible = visible,
-            menuList = menuList,
+            windowMenu = windowMenu,
+            alwaysOnTop = alwaysOnTop,
             content = content
         )
     }
@@ -63,13 +60,16 @@ fun UndecoratedWindow(
     title: String,
     onCloseRequest: () -> Unit,
     visible: Boolean,
-    menuList: List<AppMenu>,
+    alwaysOnTop: Boolean,
+    titleColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    windowMenu: @Composable RowScope.() -> Unit = {},
     content: @Composable (ComposeWindow) -> Unit
 ) {
     Window(
         onCloseRequest = onCloseRequest,
         title = title,
         visible = visible,
+        alwaysOnTop = alwaysOnTop,
         transparent = true,
         // 透明窗口必须无边框
         undecorated = true,
@@ -91,13 +91,12 @@ fun UndecoratedWindow(
                                 text = title,
                                 fontSize = 16.sp,
                                 modifier = Modifier.padding(horizontal = 8.dp),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = titleColor,
                             )
                             AppMenuBar(
                                 modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                                 horizontalArrangement = Arrangement.End,
-                                menuList = menuList,
-                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                content = windowMenu,
                             )
                         }
                     }
@@ -115,12 +114,14 @@ fun DecoratedWindow(
     title: String,
     onCloseRequest: () -> Unit,
     visible: Boolean,
-    menuList: List<AppMenu>,
+    alwaysOnTop: Boolean,
+    windowMenu: @Composable RowScope.() -> Unit = {},
     content: @Composable (ComposeWindow) -> Unit
 ) {
     Window(
         onCloseRequest = onCloseRequest,
         title = title,
+        alwaysOnTop = alwaysOnTop,
         visible = visible,
     ) {
         MaterialTheme {
@@ -133,7 +134,7 @@ fun DecoratedWindow(
                     AppMenuBar(
                         modifier = Modifier.fillMaxWidth().height(36.dp).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.Start,
-                        menuList = menuList,
+                        content = windowMenu,
                     )
                     Box(modifier = Modifier.fillMaxSize()) {
                         content(window)
@@ -148,49 +149,52 @@ fun DecoratedWindow(
 @Composable
 fun AppMenuBar(
     modifier: Modifier,
-    iconPadding: Dp = 8.dp,
-    iconSize: Dp = 24.dp,
-    iconShapeRadius: Dp = 7.dp,
-    iconColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.End,
-    menuList: List<AppMenu>
+    content: @Composable RowScope.() -> Unit
 ) {
-    val iconButtonSize by remember { mutableStateOf(iconSize + (iconPadding * 2)) }
-    LazyRow(
-        modifier = modifier,
+
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
         verticalAlignment = verticalAlignment,
         horizontalArrangement = horizontalArrangement
     ) {
-        items(menuList, key = { item -> item.tooltip }) { item ->
-            TooltipArea(
-                tooltip = {
-                    Card {
-                        Text(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                            text = item.tooltip
-                        )
-                    }
-                }
-            ) {
-                Icon(
-                    painter = painterResource(item.icon),
-                    contentDescription = item.tooltip,
-                    modifier = Modifier.size(iconButtonSize)
-                        .clip(RoundedCornerShape(iconShapeRadius))
-                        .clickable(onClick = item.onClickCallback)
-                        .padding(iconPadding),
-                    tint = iconColor
-                )
-            }
-        }
+        content()
     }
 
 }
 
-class AppMenu(
-    val icon: DrawableResource,
-    val tooltip: String,
-    val onClickCallback: () -> Unit,
-)
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun AppMenu(
+    icon: Painter,
+    tooltip: String,
+    iconPadding: Dp = 8.dp,
+    iconSize: Dp = 24.dp,
+    iconShapeRadius: Dp = 7.dp,
+    iconColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    onClickCallback: () -> Unit,
+) {
+    val iconButtonSize by remember { mutableStateOf(iconSize + (iconPadding * 2)) }
+    TooltipArea(
+        tooltip = {
+            Card {
+                Text(
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                    text = tooltip
+                )
+            }
+        }
+    ) {
+        Icon(
+            painter = icon,
+            contentDescription = tooltip,
+            modifier = Modifier.size(iconButtonSize)
+                .clip(RoundedCornerShape(iconShapeRadius))
+                .clickable(onClick = onClickCallback)
+                .padding(iconPadding),
+            tint = iconColor
+        )
+    }
+}
 
