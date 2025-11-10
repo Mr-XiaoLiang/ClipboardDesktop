@@ -62,6 +62,7 @@ compose.desktop {
                 bundleID = pkgName
                 pkgPackageVersion = versionName
                 pkgPackageBuildVersion = buildVersion
+                jvmArgs("-Dapple.awt.enableTemplateImages=true")
                 iconFile.set(project.file("src/jvmMain/resources/icon.icns"))
             }
             windows {
